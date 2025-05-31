@@ -3,6 +3,7 @@ package com.gasigwatin.REST_10_Springboot_project_withDBsServicesDTOandTests.sch
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SchoolService {
@@ -21,9 +22,9 @@ public class SchoolService {
         return schoolDto;
     }
 
-    public List<School> retrieveAllSchools(){
+    public List<SchoolDto> retrieveAllSchools(){
 
-        return schoolRepository.findAll();
+        return schoolRepository.findAll().stream().map(schoolMapper::toSchoolDto).collect(Collectors.toList());
     }
 
     public void deleteASchool(Integer schoolId){

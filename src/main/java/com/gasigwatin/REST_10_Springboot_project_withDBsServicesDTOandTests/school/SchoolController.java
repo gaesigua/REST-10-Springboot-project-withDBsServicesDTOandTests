@@ -20,7 +20,7 @@ public class SchoolController {
     }
 
     @GetMapping("/schools")
-    public List<School> retrieveAllSchools(){
+    public List<SchoolDto> retrieveAllSchools(){
 
         return schoolService.retrieveAllSchools();
     }

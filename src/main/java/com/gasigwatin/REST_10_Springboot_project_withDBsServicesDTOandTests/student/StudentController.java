@@ -1,68 +1,45 @@
 package com.gasigwatin.REST_10_Springboot_project_withDBsServicesDTOandTests.student;
 
 import com.gasigwatin.REST_10_Springboot_project_withDBsServicesDTOandTests.school.School;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
 public class StudentController {
 
-    private final StudentRepository studentRepository;
+    private final StudentService studentService;
 
-    public StudentController(StudentRepository studentRepository){
-        this.studentRepository = studentRepository;
+    public StudentController(StudentService studentService){
+        this.studentService = studentService;
     }
 
     @PostMapping("/students")
-    public StudentResponseDto postStudentDetails(@RequestBody StudentDto studentDto){
+    public StudentResponseDto saveStudent(@Valid @RequestBody StudentDto studentDto){
 
-        var student = toStudentDto(studentDto);
-
-        var savedStudent = studentRepository.save(student);
-
-        return toStudentResponseDto(savedStudent);
+        return studentService.saveStudent(studentDto);
     }
-
-    private Student toStudentDto(StudentDto dto){
-       var student = new Student();
-
-       student.setFirstName(dto.firstName());
-       student.setLastName(dto.lastName());
-       student.setEmail(dto.email());
-       student.setAge(dto.age());
-
-       var school = new School();
-
-       school.setId(dto.schoolId());
-
-       student.setSchool(school);
-
-       return student;
-
-    }
-
-    private StudentResponseDto toStudentResponseDto(Student student){
-        return new StudentResponseDto(student.getFirstName(), student.getLastName());
-    }
-
-
 
     @GetMapping("/students")
-    public List<Student> retrieveAllStudents(){
-       return studentRepository.findAll();
+    public List<StudentResponseDto> retrieveAllStudents(){
+       return studentService.retrieveAllStudents();
     }
 
     @GetMapping("/students/search/{student-id}")
-    public Student retrieveOneStudentById(@PathVariable Integer studentId){
-        return studentRepository.findById(studentId).orElse(new Student());
+    public StudentResponseDto retrieveOneStudentById(@PathVariable Integer studentId){
+        return studentService.retrieveOneStudentById(studentId);
     }
 
     @GetMapping("/students/search/{student-firstname}")
-    public List<Student> retrieveOneStudentByFirstName(@PathVariable("student-firstname") String fName){
+    public List<StudentResponseDto> retrieveOneStudentByFirstName(@PathVariable("student-firstname") String fName){
 
-        return studentRepository.findAllByFirstNameContaining(fName);
+        return studentService.retrieveOneStudentByFirstName(fName);
 
     }
 
@@ -70,6 +47,21 @@ public class StudentController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void deleteOneStudent(@PathVariable("student-id") Integer studentId){
 
-        studentRepository.deleteById(studentId);
+        studentService.deleteOneStudent(studentId);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception){
+
+        var errors = new HashMap<String, String>();
+
+        exception.getBindingResult().getAllErrors().forEach(error -> {
+            var fieldName = ((FieldError)error).getField();
+            var errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+
     }
 }
